@@ -3,7 +3,7 @@ export interface WriteStreamOptions {
   "frameRate"?: number,
   "dispose"?: number,
   "repeat"?: number,
-  "transparent"?: boolean,
+  "transparent"?: number,
   "quality": number,
 }
 
@@ -14,3 +14,5 @@ export interface EncoderOptions {
   setRepeat: (value: number) => void,
   setTransparent: (color: number) => void
 }
+
+export type OptionsFuncName = "setDelay" | "setFrameRate" | "setDispose" | "setRepeat" | "setTransparent"

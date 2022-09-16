@@ -1,5 +1,5 @@
 export default class ByteArray {
-  private data: number[] = [];
+  public data: number[] = [];
 
   public getData() {
     return Buffer.from(this.data);

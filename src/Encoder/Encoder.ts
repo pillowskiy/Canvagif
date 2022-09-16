@@ -1,52 +1,41 @@
-import stream from "stream";
-import { WriteStreamOptions, EncoderOptions } from "../types/Encoder";
+import type { EncoderOptions } from "../types/Encoder";
+import ByteArray from "./ByteArray";
 
 export default class Encoder implements EncoderOptions {
   readonly width: number;
   readonly height: number;
 
   private started = false;
-  private delay: number;
-  private repeat: number;
-  private dispose: number;
+  private delay = 0;
+  private repeat = 0;
+  private dispose = -1;
   private transparent: number;
+  private sample = 10;
 
-  private readStreams: stream.Duplex[] = [];
+  private pixels: Uint8Array;
+  private indexedPixels: Uint8Array;
+
+  private image: CanvasRenderingContext2D | Uint8ClampedArray;
+
+  readonly out = new ByteArray();
+
   constructor(width: number, height: number) {
-    this.width = ~~width;
-    this.height = ~~height;
-  }  
-  private createReadStream(readStream: stream.Duplex) {
-    if(!readStream) throw Error("Cannot find readable strem");
-    this.readStreams.push(readStream);
-    return readStream;
+    this.width = width;
+    this.height = height;
   }
-  public createWriteStream(options?: WriteStreamOptions) {
-    if(options) {
-      Object.keys(options).forEach(option => {
-        const setFunc = 'set' + option[0].toUpperCase() + option.substring(1);
-        if (~['setDelay', 'setFrameRate', 'setDispose', 'setRepeat',
-          'setTransparent', 'setQuality'].indexOf(setFunc)) {
-          // this[setFunc].call(self, options[option as keyof WriteStreamOptions]);
-        }
-      });
+  public start() {
+    this.out.writeUTFBytes("GIF89a");
+    this.started = true;
+  }
+  public addFrame(imageData: CanvasRenderingContext2D) {
+    if (imageData && imageData.getImageData) {
+      this.image = imageData.getImageData(0, 0, this.width, this.height).data;
+    } else {
+      this.image = imageData;
     }
-
-    // const writeStream = new stream.Duplex({ objectMode: true });
-    // this.createReadStream(writeStream);
-
-    // writeStream._write = (data, _, next) => {
-    //   if (!this.started) this.start();
-    //   this.addFrame(data);
-    //   next();
-    // };
-
-    // const end = writeStream.end;
-    // writeStream.end = () => {
-    //   end.apply(writeStream, [].slice.call(arguments));
-    //   this.finish();
-    // };
-    // return writeStream;
+  }
+  public finish() {
+    this.out.writeByte(0x3b);
   }
   public setDelay(milliseconds: number) {
     this.delay = Math.round(milliseconds / 10);
@@ -59,6 +48,10 @@ export default class Encoder implements EncoderOptions {
   }
   public setRepeat(value: number) {
     this.repeat = value;
+  }
+  public setQuality(quality: number) {
+    if(quality < 1) quality = 1;
+    this.sample = quality;
   }
   public setTransparent(color: number) {
     this.transparent = color;

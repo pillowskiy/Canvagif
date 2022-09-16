@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/PillowPowa/Canvagif#readme",
   "devDependencies": {
-    "@types/node": "^18.7.18",
+    "@types/node": "^16.11.59",
     "@typescript-eslint/eslint-plugin": "^5.37.0",
     "@typescript-eslint/parser": "^5.37.0",
     "eslint": "^8.23.1",

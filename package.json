@@ -1,0 +1,32 @@
+{
+  "name": "canvagif",
+  "version": "1.0.0",
+  "description": "Lib for making gif in canvas",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PillowPowa/Canvagif.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PillowPowa/Canvagif/issues"
+  },
+  "homepage": "https://github.com/PillowPowa/Canvagif#readme",
+  "devDependencies": {
+    "@types/node": "^18.7.18",
+    "@typescript-eslint/eslint-plugin": "^5.37.0",
+    "@typescript-eslint/parser": "^5.37.0",
+    "eslint": "^8.23.1",
+    "prettier": "^2.7.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.8.3"
+  },
+  "dependencies": {
+    "canvas": "^2.10.1"
+  }
+}

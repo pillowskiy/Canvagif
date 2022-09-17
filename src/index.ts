@@ -1,56 +1,52 @@
 import Encoder from "../src/Encoder/Encoder";
+import Decoder from "../src/Decoder/Decoder";
+
 import { createCanvas } from 'canvas';
 import { writeFile } from 'fs';
 import path from 'path';
 
 (async () => {
   console.time();
-  await draw();
+  await drawBanner();
   console.timeEnd();
 })();
 
-async function draw() {
-  const size = 200;
-  const half = size / 2;
-
-  const canvas = createCanvas(size, size);
-  const ctx = canvas.getContext('2d');
-
-  function drawBackground() {
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, size, size);
-  }
-
-  const encoder = new Encoder(size, size);
-  encoder.setDelay(500);
-  encoder.setRepeat(0);
+async function drawBanner() {
+  const encoder = new Encoder(600, 338);
+  const start = Date.now();
 
   encoder.start();
+  encoder.setRepeat(0);
+  encoder.setQuality(150);
 
-  drawBackground();
-  ctx.fillStyle = '#ff0000';
-  ctx.fillRect(0, 0, half, half);
-  encoder.addFrame(ctx);
+  const canvas = createCanvas(600, 338);
 
-  drawBackground();
-  ctx.fillStyle = '#ff0000';
-  ctx.fillRect(half, 0, half, half);
-  encoder.addFrame(ctx);
+  const ctx = canvas.getContext("2d");
+  ctx.lineWidth = 3;
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "center";
+  ctx.font = "40px Sans";
 
-  drawBackground();
-  ctx.fillStyle = '#000';
-  ctx.fillRect(half, half, half, half);
-  encoder.addFrame(ctx);
+  const decoder = new Decoder();
+  decoder.setUrl(`${process.cwd()}/canvas/background.gif`);
+  decoder.setFramesCount("all");
+  decoder.setCollective(true);
 
-  drawBackground();
-  ctx.fillStyle = '#818181';
-  ctx.fillRect(0, half, half, half);
-  encoder.addFrame(ctx);
+  const frameData = await decoder.start();
+  for (let i = 0; i < frameData.length; i++) {
+    encoder.setDelay(20);
+    console.log(`Рисую хуйню номер ${i} из ${frameData.length}`);
+    ctx.drawImage(frameData[i].getImage(), 0, 0, 600, 338);
+    ctx.fillText("Hello World", 200, 240);
+    encoder.addFrame(ctx);
+  }
 
   encoder.finish();
-
   const buffer = encoder.out.getData();
+  writeFile(path.join(__dirname, 'test.gif'), buffer, error => null);
 
-  writeFile(path.join(__dirname, 'test.gif'), buffer, () => null);
-  return true;
+  const end = Date.now();
+  console.log(
+    `Функция выполнилась за ${end - start}ms.`
+  );
 }

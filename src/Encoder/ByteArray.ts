@@ -12,7 +12,8 @@ export default class ByteArray {
       this.writeByte(string.charCodeAt(i));
     }
   }
-  public writeBytes(array: Uint8Array, offset: number, length: number) {
+  // bad array type, fix
+  public writeBytes(array: Uint8Array | number[], offset?: number, length?: number) {
     const writtenLength = length || array.length;
     for (let i = offset || 0; i < writtenLength; i++) {
       this.writeByte(array[i]);

@@ -110,7 +110,7 @@ export default class LZWEncode {
     this.output(ent, outs);
     this.output(this.EOFCode, outs);
   }
-  private encode(outs: ByteArray) {
+  public encode(outs: ByteArray) {
     outs.writeByte(this.initCodeSize);
     this.remaining = this.width * this.height;
     this.curPixel = 0;

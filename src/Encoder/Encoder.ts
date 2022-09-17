@@ -225,6 +225,7 @@ export default class Encoder implements EncoderOptions {
     this.out.writeByte(0x21);
     this.out.writeByte(0xff);
     this.out.writeByte(11);
+    this.out.writeUTFBytes('NETSCAPE2.0');
     this.out.writeByte(3);
     this.out.writeByte(1);
     this.writeShort(this.repeat);
@@ -296,10 +297,10 @@ export default class Encoder implements EncoderOptions {
    * 
    *    n — a positive number, loop n times, cannot be more than 20.
    * 
-   * @returns {this} Encoder 
+   * @returns {this} Encoder
   */
-  public setRepeat(value = 0) {
-    let readableValue: number;
+  public setRepeat(value: number) {
+    let readableValue = 0;
 
     if (value < 0) {
       readableValue = -1;

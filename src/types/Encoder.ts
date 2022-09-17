@@ -15,4 +15,9 @@ export interface EncoderOptions {
   setTransparent: (color: number) => void
 }
 
-export type OptionsFuncName = "setDelay" | "setFrameRate" | "setDispose" | "setRepeat" | "setTransparent"
+export interface LZWEncodeDetails {
+  "pixels": Uint8Array,
+  "colorDepth": number
+}
+
+export type OptionsFuncName = "setDelay" | "setFrameRate" | "setDispose" | "setRepeat" | "setTransparent";

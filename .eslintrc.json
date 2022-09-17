@@ -12,6 +12,6 @@
 		"@typescript-eslint/no-explicit-any": "error",
 		// "@typescript-eslint/ban-ts-comment": "error",
 		"semi": "error",
-		"no-console": "error"
+		"no-console": "warn"
 	}
 }

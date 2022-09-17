@@ -4,7 +4,18 @@ import ColorMap from "./ColorMap";
 import LZWEncode from "./LZWEncode";
 
 export default class Encoder implements EncoderOptions {
+  /**
+    * Context width
+    * @type {number}
+    * @readonly
+  */
   readonly width: number;
+
+  /**
+    * Context height
+    * @type {number}
+    * @readonly
+  */
   readonly height: number;
 
   private started = false;
@@ -20,7 +31,7 @@ export default class Encoder implements EncoderOptions {
 
   private firstFrame = true;
 
-  private usedEntry: boolean[];
+  private usedEntry = new Array({});
 
   private colorTab: number[];
 
@@ -31,14 +42,31 @@ export default class Encoder implements EncoderOptions {
 
   readonly out = new ByteArray();
 
+  /**
+     * Encoder constructor
+     * @param {number} width Canvas Width
+     * @param {number} height Canvas Height
+  */
   constructor(width: number, height: number) {
     this.width = width;
     this.height = height;
   }
+
+  /**
+   * Starts encode and makes gif
+   * @returns {boolean} a boolean value that indicates the success of the gif creation
+  */
   public start() {
     this.out.writeUTFBytes("GIF89a");
     this.started = true;
+    return this.started;
   }
+
+  /**
+   * Write out a new frame to the GIF.
+   * @param {CanvasRenderingContext2D} imageData rendering canvas context (2d)
+   * @returns {void} void
+  */
   public addFrame(imageData: CanvasRenderingContext2D) {
     if (imageData && imageData.getImageData) {
       this.image = imageData.getImageData(0, 0, this.width, this.height).data;
@@ -73,8 +101,8 @@ export default class Encoder implements EncoderOptions {
       for (let j = 0; j < this.width; j++) {
         const b = (i * this.width * 4) + j * 4;
         this.pixels[count++] = image[b];
-        this.pixels[count++] = image[b+1];
-        this.pixels[count++] = image[b+2];
+        this.pixels[count++] = image[b + 1];
+        this.pixels[count++] = image[b + 2];
       }
     }
   }
@@ -203,26 +231,115 @@ export default class Encoder implements EncoderOptions {
     this.writeShort(this.repeat);
     this.out.writeByte(0);
   }
+
+  /**
+   * Ends encode and the final byte of the gif is being written
+   * @returns {Buffer} a boolean value that indicates the success of the gif creation
+  */
   public finish() {
     this.out.writeByte(0x3b);
+    return this.out.getData();
   }
+
+  /**
+   * Set milliseconds to wait between frames
+   * Default 0
+   * @param {number} milliseconds number milliseconds of encoder's delay
+   * @returns {this} Encoder 
+  */
   public setDelay(milliseconds: number) {
     this.delay = Math.round(milliseconds / 10);
+    return this;
   }
+
+  /**
+   * Set encoder fps
+   * @param {number} fps number frames of encoder per second
+   * @returns {this} Encoder 
+  */
   public setFrameRate(fps: number) {
     this.delay = Math.round(100 / fps);
+    return this;
   }
+
+  /**
+   * Set the disposal code
+   * @param {number} code alters behavior of how to render between frames. If no transparent color has been set, defaults to 0. Otherwise, defaults to 2.
+   *
+   *  
+   * Values :
+   * 
+   *    0 — No disposal specified. The decoder is not required to take any action.
+   * 
+   *    1 — Do not dispose. The graphic is to be left in place.
+   * 
+   *    2 — Restore to background color. The area used by the graphic must be restored to the background color.
+   * 
+   *    3 — Restore to previous. The decoder is required to restore the area overwritten by the graphic with what was there prior to rendering the graphic.
+   * 
+   * @returns {this} Encoder 
+  */
   public setDispose(code: number) {
     if (code >= 0) this.dispose = code;
+    return this;
   }
-  public setRepeat(value: number) {
-    this.repeat = value;
+
+  /**
+   * Sets amount of times to repeat GIF
+   * @param {number} value amount of repeat
+   *
+   *  
+   * Values :
+   * 
+   *    -1 — Play once.
+   * 
+   *    0 — Loop indefinitely.
+   * 
+   *    n — a positive number, loop n times, cannot be more than 20.
+   * 
+   * @returns {this} Encoder 
+  */
+  public setRepeat(value = 0) {
+    let readableValue: number;
+
+    if (value < 0) {
+      readableValue = -1;
+    } else if (value > 20) {
+      readableValue = 20;
+    }
+
+    this.repeat = readableValue;
+    return this;
   }
+
+  /**
+   * Set the quality.
+   * @param {number} quality positive number
+   *
+   *  
+   * Info :
+   * 
+   *    1 — best colors, worst performance.
+   * 
+   *    n — 20 is suggested maximum, but there is no limit.
+   * 
+   * @returns {this} Encoder 
+  */
   public setQuality(quality: number) {
-    if(quality < 1) quality = 1;
+    if (quality < 1) quality = 1;
     this.sample = quality;
+    return this;
   }
+
+  /**
+   * Define the color which represents transparency in the GIF.
+   * @param {number} color color to represent transparent background
+   *
+   * Example: 0x00FF00
+   * @returns {this} Encoder
+  */
   public setTransparent(color: number) {
     this.transparent = color;
+    return this;
   }
 }

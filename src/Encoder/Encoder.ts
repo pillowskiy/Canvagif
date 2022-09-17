@@ -1,7 +1,7 @@
 import type { EncoderOptions } from "../types/Encoder";
 import ByteArray from "./ByteArray";
 import ColorMap from "./ColorMap";
-import LZWEncode from "./LZWEncode";
+import PixelWriter from "./PixelWriter";
 
 export default class Encoder implements EncoderOptions {
   /**
@@ -171,7 +171,7 @@ export default class Encoder implements EncoderOptions {
     this.out.writeByte((value >> 8) & 0xFF);
   }
   private writePixels() {
-    const encoder = new LZWEncode(
+    const encoder = new PixelWriter(
       this.width, this.height,
       { "pixels": this.indexedPixels, "colorDepth": this.colorDepth }
     );
@@ -225,7 +225,6 @@ export default class Encoder implements EncoderOptions {
     this.out.writeByte(0x21);
     this.out.writeByte(0xff);
     this.out.writeByte(11);
-    this.out.writeUTFBytes('NETSCAPE2.0');
     this.out.writeByte(3);
     this.out.writeByte(1);
     this.writeShort(this.repeat);

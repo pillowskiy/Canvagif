@@ -15,7 +15,7 @@ export interface EncoderOptions {
   setTransparent: (color: number) => void
 }
 
-export interface LZWEncodeDetails {
+export interface PixelWriterDetails {
   "pixels": Uint8Array,
   "colorDepth": number
 }

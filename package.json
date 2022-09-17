@@ -21,6 +21,7 @@
     "@types/ndarray": "^1.0.11",
     "@types/ndarray-ops": "^1.2.4",
     "@types/node": "^16.11.59",
+    "@types/omggif": "^1.0.3",
     "@typescript-eslint/eslint-plugin": "^5.37.0",
     "@typescript-eslint/parser": "^5.37.0",
     "eslint": "^8.23.1",
@@ -34,7 +35,6 @@
     "multi-integer-range": "^5.0.0",
     "ndarray": "^1.0.19",
     "ndarray-ops": "^1.2.2",
-    "omggif": "^1.0.10",
-    "parse-data-uri": "^0.2.0"
+    "omggif": "^1.0.10"
   }
 }

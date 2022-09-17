@@ -1,22 +1,23 @@
-import { MultiRange } from 'multi-integer-range';
 import ndarray from "ndarray";
 import ops from 'ndarray-ops';
 
-// @ts-ignore
-import parseDataURI from 'parse-data-uri';
-// @ts-ignore
+import { MultiRange } from 'multi-integer-range';
 import { GifReader } from 'omggif';
-import fs from "fs";
+import { readFile } from "fs";
 import { createCanvas } from 'canvas';
-import { FrameData } from '../types/Decoder';
+import axios from "axios";
+
+import type { FrameData } from '../types/Decoder';
+import { parseDataUri, isImage } from '../utils/Util';
 
 export default class Decoder {
   private url: string;
   private frames: "all" | number;
 
-  private quality: number;
   private cumulative: boolean;
   private acceptedFrames: MultiRange | "all";
+
+  private started = false;
 
   private async handleGIF(data: Buffer, cb: (err: unknown, array?: ndarray.NdArray<Uint8Array>) => void) {
     let reader, ndata;
@@ -66,7 +67,7 @@ export default class Decoder {
       this.handleGIF(url, cb);
     } else if (url.indexOf('data:') === 0) {
       try {
-        const buffer = parseDataURI(url);
+        const buffer = parseDataUri(url);
         if (buffer) {
           process.nextTick(() => {
             this.handleGIF(buffer.data, cb);
@@ -81,8 +82,13 @@ export default class Decoder {
           cb(err);
         });
       }
+    } else if (url.includes("https") || url.includes("http") && isImage(url)) {
+      axios.get(url, { responseType: 'arraybuffer' }).then((response) => {
+        const buffer = Buffer.from(response.data, "utf-8");
+        this.handleGIF(buffer, cb);
+      }).catch(err => cb(err));
     } else {
-      fs.readFile(url, (err, data) => {
+      readFile(url, (err, data) => {
         if (err) {
           cb(err);
           return;
@@ -91,8 +97,7 @@ export default class Decoder {
       });
     }
   }
-  private handleData(array: ndarray.NdArray<Uint8Array>, data: any, frame?: number): string | null {
-    // console.log(data);
+  private handleData(array: ndarray.NdArray<Uint8Array>, data: any, frame?: number): string | null {  // eslint-disable-line @typescript-eslint/no-explicit-any
     if (array.shape.length === 4) {
       return this.handleData(array.pick(frame), data, 0);
     } else if (array.shape.length === 3) {
@@ -162,7 +167,7 @@ export default class Decoder {
     const data = this.handleData(array, imageData.data);
     if (typeof data === 'string') throw Error(data);
     context.putImageData(imageData, 0, 0);
-    
+
     return canvas;
   }
   public async start(): Promise<FrameData[]> {
@@ -173,6 +178,7 @@ export default class Decoder {
           reject('"url" input should be multi-frame GIF.');
           return;
         }
+        this.started = true;
         const frameData: FrameData[] = [];
         let maxAccumulatedFrame = 0;
         for (let i = 0; i < pixels.shape[0]; i++) {
@@ -211,16 +217,11 @@ export default class Decoder {
     });
   }
   public setUrl(url: string) {
-    if (this.url) throw Error("u already set url");
     this.url = url;
     return url;
   }
   public setFramesCount(count: "all" | number) {
-    if (this.frames) throw Error("u already set frames");
     this.acceptedFrames = count === 'all' ? 'all' : new MultiRange(this.frames);
-  }
-  public setQuality(value: number) {
-    this.quality = value;
   }
   public setCollective(value: boolean) {
     this.cumulative = value;

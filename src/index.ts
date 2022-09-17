@@ -28,7 +28,7 @@ async function drawBanner() {
   ctx.font = "40px Sans";
 
   const decoder = new Decoder();
-  decoder.setUrl(`${process.cwd()}/canvas/background.gif`);
+  decoder.setUrl("https://c.tenor.com/gIkUdWaNZCMAAAAd/anime.gif");
   decoder.setFramesCount("all");
   decoder.setCollective(true);
 
@@ -43,10 +43,8 @@ async function drawBanner() {
 
   encoder.finish();
   const buffer = encoder.out.getData();
-  writeFile(path.join(__dirname, 'test.gif'), buffer, error => null);
+  writeFile(path.join(__dirname, 'test.gif'), buffer, () => null);
 
   const end = Date.now();
-  console.log(
-    `Функция выполнилась за ${end - start}ms.`
-  );
+  console.log(`Функция выполнилась за ${end - start}ms.`);
 }

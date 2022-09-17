@@ -1,5 +1,5 @@
-import Encoder from "../src/Encoder/Encoder";
-import Decoder from "../src/Decoder/Decoder";
+import Encoder from "./structures/Encoder";
+import Decoder from "./structures/Decoder";
 
 import { createCanvas } from 'canvas';
 import { writeFile } from 'fs';
@@ -12,12 +12,20 @@ import path from 'path';
 })();
 
 async function drawBanner() {
+  const decoder = new Decoder();
+  decoder.setUrl("https://c.tenor.com/gIkUdWaNZCMAAAAd/anime.gif");
+  decoder.setFramesCount("all");
+  decoder.setCollective(true);
+
+  const frameData = await decoder.start();
+
   const encoder = new Encoder(600, 338);
   const start = Date.now();
 
-  encoder.start();
+  encoder.setDelay(frameData[0].details.delay * 10);
   encoder.setRepeat(0);
   encoder.setQuality(150);
+  encoder.start();
 
   const canvas = createCanvas(600, 338);
 
@@ -27,14 +35,7 @@ async function drawBanner() {
   ctx.textAlign = "center";
   ctx.font = "40px Sans";
 
-  const decoder = new Decoder();
-  decoder.setUrl("https://c.tenor.com/gIkUdWaNZCMAAAAd/anime.gif");
-  decoder.setFramesCount("all");
-  decoder.setCollective(true);
-
-  const frameData = await decoder.start();
   for (let i = 0; i < frameData.length; i++) {
-    encoder.setDelay(20);
     console.log(`Рисую хуйню номер ${i} из ${frameData.length}`);
     ctx.drawImage(frameData[i].getImage(), 0, 0, 600, 338);
     ctx.fillText("Hello World", 200, 240);

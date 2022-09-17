@@ -2,8 +2,8 @@ import { PixelWriterDetails } from "../types/Encoder";
 import ByteArray from "./ByteArray";
 
 export default class PixelWriter {
-  static MAXCODE(n_bits: number) {
-    return (1 << n_bits) - 1;
+  static maxCode(nBits: number) {
+    return (1 << nBits) - 1;
   }
 
   private pixels: Uint8Array;
@@ -17,18 +17,18 @@ export default class PixelWriter {
   private hTab = new Int32Array(5003);
   private codetab = new Int32Array(5003);
 
-  private cur_accum = 0;
-  private cur_bits = 0;
+  private curAccum = 0;
+  private curBits = 0;
   private curPixel: number;
-  private free_ent = 0;
+  private freeEnt = 0;
 
-  private a_count: number;
+  private aCount: number;
   private maxCode: number;
   private nBits: number;
 
-  private clear_flg = false;
+  private clearFlag = false;
 
-  private g_init_bits: number;
+  private globalInitBits: number;
   private clearCode: number;
   private EOFCode: number;
 
@@ -45,32 +45,32 @@ export default class PixelWriter {
     this.initCodeSize = Math.max(2, details.colorDepth);
   }
 
-  private char_out(bit: number, outs: ByteArray) {
-    this.accum[this.a_count++] = bit;
-    if (this.a_count >= 254) this.flush_char(outs);
+  private charOut(bit: number, outs: ByteArray) {
+    this.accum[this.aCount++] = bit;
+    if (this.aCount >= 254) this.flush(outs);
   }
-  private cl_block(outs: ByteArray) {
-    this.cl_hash(5003);
-    this.free_ent = this.clearCode + 2;
-    this.clear_flg = true;
+  private clBlock(outs: ByteArray) {
+    this.clHash(5003);
+    this.freeEnt = this.clearCode + 2;
+    this.clearFlag = true;
     this.output(this.clearCode, outs);
   }
-  private cl_hash(hSize: number) {
+  private clHash(hSize: number) {
     for (let i = 0; i < hSize; ++i) this.hTab[i] = -1;
   }
   private compress(init_bits: number, outs: ByteArray) {
     let fcode, c, i, ent, disp, hshift;
 
-    this.g_init_bits = init_bits;
-    this.clear_flg = false;
-    this.nBits = this.g_init_bits;
-    this.maxCode = PixelWriter.MAXCODE(this.nBits);
+    this.globalInitBits = init_bits;
+    this.clearFlag = false;
+    this.nBits = this.globalInitBits;
+    this.maxCode = PixelWriter.maxCode(this.nBits);
 
     this.clearCode = 1 << (init_bits - 1);
     this.EOFCode = this.clearCode + 1;
-    this.free_ent = this.clearCode + 2;
+    this.freeEnt = this.clearCode + 2;
 
-    this.a_count = 0;
+    this.aCount = 0;
 
     ent = this.nextPixel();
 
@@ -79,11 +79,11 @@ export default class PixelWriter {
     hshift = 8 - hshift;
 
     const hsize_reg = 5003;
-    this.cl_hash(hsize_reg);
+    this.clHash(hsize_reg);
 
     this.output(this.clearCode, outs);
 
-    outer_loop: while ((c = this.nextPixel()) != -1) {
+    loopOuter: while ((c = this.nextPixel()) != -1) {
       fcode = (c << 12) + ent;
       i = (c << hshift) ^ ent;
       if (this.hTab[i] === fcode) {
@@ -96,7 +96,7 @@ export default class PixelWriter {
           if ((i -= disp) < 0) i += hsize_reg;
           if (this.hTab[i] === fcode) {
             ent = this.codetab[i];
-            continue outer_loop;
+            continue loopOuter;
           }
         } while (this.hTab[i] >= 0);
       }
@@ -104,11 +104,11 @@ export default class PixelWriter {
       this.output(ent, outs);
       ent = c;
 
-      if (this.free_ent < 1 << 12) {
-        this.codetab[i] = this.free_ent++;
+      if (this.freeEnt < 1 << 12) {
+        this.codetab[i] = this.freeEnt++;
         this.hTab[i] = fcode;
       } else {
-        this.cl_block(outs);
+        this.clBlock(outs);
       }
     }
 
@@ -122,11 +122,11 @@ export default class PixelWriter {
     this.compress(this.initCodeSize + 1, outs);
     outs.writeByte(0);
   }
-  private flush_char(outs: ByteArray) {
-    if (this.a_count > 0) {
-      outs.writeByte(this.a_count);
-      outs.writeBytes(this.accum, 0, this.a_count);
-      this.a_count = 0;
+  private flush(outs: ByteArray) {
+    if (this.aCount > 0) {
+      outs.writeByte(this.aCount);
+      outs.writeBytes(this.accum, 0, this.aCount);
+      this.aCount = 0;
     }
   }
   private nextPixel() {
@@ -136,39 +136,39 @@ export default class PixelWriter {
     return pix & 0xff;
   }
   private output(code: number, outs: ByteArray) {
-    this.cur_accum &= this.bitMasks[this.cur_bits];
+    this.curAccum &= this.bitMasks[this.curBits];
 
-    this.cur_bits > 0 ?
-      this.cur_accum |= (code << this.cur_bits):
-      this.cur_accum = code;
+    this.curBits > 0 ?
+      this.curAccum |= (code << this.curBits):
+      this.curAccum = code;
 
-    this.cur_bits += this.nBits;
+    this.curBits += this.nBits;
 
-    while (this.cur_bits >= 8) {
-      this.char_out((this.cur_accum & 0xff), outs);
-      this.cur_accum >>= 8;
-      this.cur_bits -= 8;
+    while (this.curBits >= 8) {
+      this.charOut((this.curAccum & 0xff), outs);
+      this.curAccum >>= 8;
+      this.curBits -= 8;
     }
 
-    if (this.free_ent > this.maxCode || this.clear_flg) {
-      if (this.clear_flg) {
-        this.maxCode = PixelWriter.MAXCODE(this.nBits = this.g_init_bits);
-        this.clear_flg = false;
+    if (this.freeEnt > this.maxCode || this.clearFlag) {
+      if (this.clearFlag) {
+        this.maxCode = PixelWriter.maxCode(this.nBits = this.globalInitBits);
+        this.clearFlag = false;
       } else {
         ++this.nBits;
         this.nBits == 12 ?
           this.maxCode = 1 << 12:
-          this.maxCode = PixelWriter.MAXCODE(this.nBits);
+          this.maxCode = PixelWriter.maxCode(this.nBits);
       }
     }
 
     if (code == this.EOFCode) {
-      while (this.cur_bits > 0) {
-        this.char_out((this.cur_accum & 0xff), outs);
-        this.cur_accum >>= 8;
-        this.cur_bits -= 8;
+      while (this.curBits > 0) {
+        this.charOut((this.curAccum & 0xff), outs);
+        this.curAccum >>= 8;
+        this.curBits -= 8;
       }
-      this.flush_char(outs);
+      this.flush(outs);
     }
   }
 }

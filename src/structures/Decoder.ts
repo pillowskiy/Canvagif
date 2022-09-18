@@ -7,7 +7,7 @@ import { readFile } from "fs";
 import { createCanvas } from 'canvas';
 import axios from "axios";
 
-import type { FrameData } from '../types/Decoder';
+import type { FrameData } from '../types';
 import { parseDataUri, isImage } from '../utils/Util';
 import { CanvaGifError, ErrorCode } from "./CanvaGifError";
 
@@ -17,7 +17,7 @@ export default class Decoder {
 
   private cumulative: boolean;
   private acceptedFrames: MultiRange | "all";
-
+  
   private started = false;
 
   private async handleGIF(data: Buffer, cb: (err: CanvaGifError, array?: ndarray.NdArray<Uint8Array>, reader?: GifReader) => void) {
@@ -221,14 +221,16 @@ export default class Decoder {
   public setUrl(url: string) {
     if (this.started) throw new CanvaGifError("You cannot change decode options after it starts.", ErrorCode.DECODER_ERROR);
     this.url = url;
-    return url;
+    return this;
   }
   public setFramesCount(count: "all" | number) {
     if (this.started) throw new CanvaGifError("You cannot change decode options after it starts.", ErrorCode.DECODER_ERROR);
     this.acceptedFrames = count === 'all' ? 'all' : new MultiRange(this.frames);
+    return this;
   }
   public setCollective(value: boolean) {
     if (this.started) throw new CanvaGifError("You cannot change decode options after it starts.", ErrorCode.DECODER_ERROR);
     this.cumulative = value;
+    return this;
   }
 }

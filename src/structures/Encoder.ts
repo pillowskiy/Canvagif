@@ -1,10 +1,9 @@
-import type { EncoderOptions } from "../types/Encoder";
 import ByteArray from "../Encoder/ByteArray";
 import ColorMap from "../Encoder/ColorMap";
 import PixelWriter from "../Encoder/PixelWriter";
 import { CanvaGifError, ErrorCode } from "./CanvaGifError";
 
-export default class Encoder implements EncoderOptions {
+export default class Encoder {
   /**
     * Context width
     * @type {number}

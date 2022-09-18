@@ -2,10 +2,6 @@ export enum ErrorCode {
   "CANVA_GIF_ERROR" = "Canva-Gif Error",
   "DECODER_ERROR" = "Decoder Error",
   "ENCODER_ERROR" = "Encoder Error",
-  "BUFFER_ERROR" = "Buffer Error",
-  "COLOR_MAP_ERROR" = "MODULE — Color-Map Error",
-  "BYTE_ARRAY_ERROR" = "MODULE — ByteArray Error",
-  "PIXEL_WRITER_ERROR" = "MODULE — Pixel Writer Error"
 }
 
 export class CanvaGifError extends Error {

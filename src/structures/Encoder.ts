@@ -255,7 +255,7 @@ export class Encoder {
   */
   public setDelay(milliseconds: number): this {
     if (this.started) throw new CanvaGifError(`You cannot change encode options after it starts.`, ErrorCode.ENCODER_ERROR);
-    this.delay = Math.round(milliseconds / 10);
+    this.delay = milliseconds;
     return this;
   }
 
@@ -268,7 +268,7 @@ export class Encoder {
   */
   public setFrameRate(fps: number): this {
     if (this.started) throw new CanvaGifError(`You cannot change encode options after it starts.`, ErrorCode.ENCODER_ERROR);
-    this.delay = Math.round(100 / fps);
+    this.delay = 100 / fps;
     return this;
   }
 

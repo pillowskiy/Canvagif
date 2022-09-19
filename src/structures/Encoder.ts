@@ -2,6 +2,10 @@ import ByteArray from "../Encoder/ByteArray";
 import ColorMap from "../Encoder/ColorMap";
 import PixelWriter from "../Encoder/PixelWriter";
 import { CanvaGifError, ErrorCode } from "./CanvaGifError";
+import type { SKRSContext2D } from "@napi-rs/canvas";
+
+import NAPI from "@napi-rs/canvas";
+import { createCanvas, type CanvasRenderingContext2D } from "canvas";
 
 export default class Encoder {
   /**
@@ -19,12 +23,12 @@ export default class Encoder {
   readonly height: number;
 
   private started = false;
-  private delay = 0;
+  private delay = 100 / 30;
   private repeat = 0;
   private dispose = -1;
   private transIndex = 0;
   private transparent: number;
-  private sample = 10;
+  private sample = 100;
 
   private colorDepth: number;
   private palSize: number;
@@ -40,6 +44,7 @@ export default class Encoder {
 
   private image: Uint8ClampedArray | CanvasRenderingContext2D;
 
+  private drawType: "canvas" | "napi_canvas";
   readonly out = new ByteArray();
 
   /**
@@ -54,12 +59,12 @@ export default class Encoder {
 
   /**
    * Starts encode and makes gif
-   * @returns {boolean} a boolean value that indicates the success of the gif creation
+   * @returns {this} Encoder
   */
   public start() {
     this.out.writeUTFBytes("GIF89a");
     this.started = true;
-    return this.started;
+    return this;
   }
 
   /**
@@ -67,8 +72,10 @@ export default class Encoder {
    * @param {CanvasRenderingContext2D} imageData rendering canvas context (2d)
    * @returns {void} void
   */
-  public addFrame(imageData: CanvasRenderingContext2D) {
+  public addFrame(imageData: CanvasRenderingContext2D | SKRSContext2D) {
     if (!imageData) throw new CanvaGifError(`You didn't enter an image data. Function waiting for "CanvasRenderingContext2D"`, ErrorCode.ENCODER_ERROR);
+    if (!this.started) throw new CanvaGifError("You cannot add frame before encoder starts.", ErrorCode.ENCODER_ERROR);
+
     if (imageData && imageData.getImageData) {
       this.image = imageData.getImageData(0, 0, this.width, this.height).data;
     } else {
@@ -327,7 +334,7 @@ export default class Encoder {
    * 
    *    1 — best colors, worst performance.
    * 
-   *    n — 20 is suggested maximum, but there is no limit.
+   *    n — the higher the number, the worse the quality.
    * 
    * @returns {this} Encoder 
   */
@@ -336,6 +343,28 @@ export default class Encoder {
     if (quality < 1) quality = 1;
     this.sample = quality;
     return this;
+  }
+
+  /**
+   * Get the canvas engine: napi_canvas or canvas; default canvas
+   * @param {"napi_canvas" | "canvas"} type color to represent transparent background
+   *
+   * @returns {this} Encoder
+  */
+ // fix
+  public getContext(type: "napi_canvas" | "canvas" = "canvas"): NAPI.SKRSContext2D | CanvasRenderingContext2D {
+    this.drawType = type;
+
+    switch(type) {
+      case "canvas": {
+        const canvas = createCanvas(this.width, this.height);
+        return canvas.getContext("2d");
+      }
+      case "napi_canvas": {
+        const canvas = NAPI.createCanvas(this.width, this.height);
+        return canvas.getContext("2d");
+      }
+    }
   }
 
   /**

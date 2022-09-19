@@ -1,4 +1,4 @@
-import { PixelWriterDetails } from "../types/Encoder";
+import { PixelWriterDetails } from "../types";
 import ByteArray from "./ByteArray";
 
 export default class PixelWriter {

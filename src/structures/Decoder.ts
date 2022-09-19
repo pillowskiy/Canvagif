@@ -5,6 +5,7 @@ import { MultiRange } from 'multi-integer-range';
 import { GifReader } from 'omggif';
 import { readFile } from "fs";
 import { createCanvas } from 'canvas';
+import NAPI from "@napi-rs/canvas";
 import axios from "axios";
 
 import type { FrameData } from '../types';
@@ -13,13 +14,15 @@ import { CanvaGifError, ErrorCode } from "./CanvaGifError";
 
 export default class Decoder {
   private url: string;
-  private frames: "all" | number;
+  private frames: "all" | number = "all";
 
+  private type: "canvas" | "napi_canvas" = "canvas";
   private cumulative: boolean;
-  private acceptedFrames: MultiRange | "all";
+  private acceptedFrames: MultiRange | "all" = "all";
   
   private started = false;
 
+  
   private async handleGIF(data: Buffer, cb: (err: CanvaGifError, array?: ndarray.NdArray<Uint8Array>, reader?: GifReader) => void) {
     let reader, ndata;
     try {
@@ -159,17 +162,38 @@ export default class Decoder {
     return null;
   }
   private savePixels(array: ndarray.NdArray<Uint8Array>) {
-    const canvas = createCanvas(600, 338);
-    const context = canvas.getContext('2d');
-    canvas.width = array.shape[0];
-    canvas.height = array.shape[1];
+    switch(this.type) {
+      case "canvas": {
+        const canvas = createCanvas(600, 338);
+        const context = canvas.getContext('2d');
+        canvas.width = array.shape[0];
+        canvas.height = array.shape[1];
+    
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
 
-    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-    const data = this.handleData(array, imageData.data);
-    if (typeof data === 'string') throw Error(data);
-    context.putImageData(imageData, 0, 0);
+        const data = this.handleData(array, imageData.data);
+        if (typeof data === 'string') throw Error(data);
 
-    return canvas;
+        context.putImageData(imageData, 0, 0);
+    
+        return canvas;
+      }
+      case "napi_canvas": {
+        const canvas = NAPI.createCanvas(600, 338);
+        const context = canvas.getContext('2d');
+        canvas.width = array.shape[0];
+        canvas.height = array.shape[1];
+    
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+        const data = this.handleData(array, imageData.data);
+        if (typeof data === 'string') throw Error(data);
+
+        context.putImageData(imageData, 0, 0);
+    
+        return canvas;
+      }
+    }
   }
   public async start(): Promise<FrameData[]> {
     return new Promise((resolve, reject) => {
@@ -207,7 +231,8 @@ export default class Decoder {
                   }
                   maxAccumulatedFrame = frameIndex;
                 }
-                return this.savePixels(pixels.pick(frameIndex));
+                const canvas = this.savePixels(pixels.pick(frameIndex));
+                return canvas;
               },
               details: reader.frameInfo(frameIndex),
               frameIndex: frameIndex,
@@ -221,6 +246,11 @@ export default class Decoder {
   public setUrl(url: string) {
     if (this.started) throw new CanvaGifError("You cannot change decode options after it starts.", ErrorCode.DECODER_ERROR);
     this.url = url;
+    return this;
+  }
+  public setDecodeTech(type: "canvas" | "napi_canvas") {
+    if (this.started) throw new CanvaGifError("You cannot change decode options after it starts.", ErrorCode.DECODER_ERROR);
+    this.type = type;
     return this;
   }
   public setFramesCount(count: "all" | number) {

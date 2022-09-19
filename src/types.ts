@@ -1,5 +1,6 @@
 import { Canvas } from "canvas";
 import { Frame } from "omggif";
+import NAPI from "@napi-rs/canvas";
 
 export interface PixelWriterDetails {
   "pixels": Uint8Array,
@@ -7,7 +8,7 @@ export interface PixelWriterDetails {
 }
 
 export interface FrameData {
-  getImage: () => Canvas,
+  getImage: () => Canvas | NAPI.Canvas,
   details: Frame | null,
   frameIndex: number
 }

@@ -2,12 +2,10 @@ import ByteArray from "../Encoder/ByteArray";
 import ColorMap from "../Encoder/ColorMap";
 import PixelWriter from "../Encoder/PixelWriter";
 import { CanvaGifError, ErrorCode } from "./CanvaGifError";
-import type { SKRSContext2D } from "@napi-rs/canvas";
 
-import NAPI from "@napi-rs/canvas";
 import { createCanvas, type CanvasRenderingContext2D } from "canvas";
 
-export default class Encoder {
+export class Encoder {
   /**
     * Context width
     * @type {number}
@@ -42,9 +40,8 @@ export default class Encoder {
   private pixels: Uint8Array;
   private indexedPixels: Uint8Array;
 
+  private context: CanvasRenderingContext2D;
   private image: Uint8ClampedArray | CanvasRenderingContext2D;
-
-  private drawType: "canvas" | "napi_canvas";
   readonly out = new ByteArray();
 
   /**
@@ -72,14 +69,14 @@ export default class Encoder {
    * @param {CanvasRenderingContext2D} imageData rendering canvas context (2d)
    * @returns {void} void
   */
-  public addFrame(imageData: CanvasRenderingContext2D | SKRSContext2D) {
-    if (!imageData) throw new CanvaGifError(`You didn't enter an image data. Function waiting for "CanvasRenderingContext2D"`, ErrorCode.ENCODER_ERROR);
+  public updateFrame() {
+    if (!this.context) throw new CanvaGifError(`You didn't enter an image data. Function waiting for "CanvasRenderingContext2D"`, ErrorCode.ENCODER_ERROR);
     if (!this.started) throw new CanvaGifError("You cannot add frame before encoder starts.", ErrorCode.ENCODER_ERROR);
 
-    if (imageData && imageData.getImageData) {
-      this.image = imageData.getImageData(0, 0, this.width, this.height).data;
+    if (this.context && this.context.getImageData) {
+      this.image = this.context.getImageData(0, 0, this.width, this.height).data;
     } else {
-      this.image = imageData as CanvasRenderingContext2D;
+      this.image = this.context as CanvasRenderingContext2D;
     }
 
     this.getImagePixels();
@@ -346,25 +343,14 @@ export default class Encoder {
   }
 
   /**
-   * Get the canvas engine: napi_canvas or canvas; default canvas
-   * @param {"napi_canvas" | "canvas"} type color to represent transparent background
+   * Get the canvas
    *
    * @returns {this} Encoder
   */
- // fix
-  public getContext(type: "napi_canvas" | "canvas" = "canvas"): NAPI.SKRSContext2D | CanvasRenderingContext2D {
-    this.drawType = type;
-
-    switch(type) {
-      case "canvas": {
-        const canvas = createCanvas(this.width, this.height);
-        return canvas.getContext("2d");
-      }
-      case "napi_canvas": {
-        const canvas = NAPI.createCanvas(this.width, this.height);
-        return canvas.getContext("2d");
-      }
-    }
+  public getContext(): CanvasRenderingContext2D {
+    const canvas = createCanvas(this.width, this.height);
+    this.context = canvas.getContext("2d");
+    return this.context;
   }
 
   /**

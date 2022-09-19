@@ -66,7 +66,6 @@ export class Encoder {
 
   /**
    * Write out a new frame to the GIF.
-   * @param {CanvasRenderingContext2D} imageData rendering canvas context (2d)
    * @returns {void} void
   */
   public updateFrame(): void {
@@ -344,7 +343,7 @@ export class Encoder {
   }
 
   /**
-   * Get the canvas
+   * Get the canvas context
    *
    * @returns {Encoder} Encoder
   */

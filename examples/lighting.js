@@ -1,4 +1,3 @@
-// A simple encoder work example
 const { writeFile } = require("fs");
 const { Encoder } = require("../dist");
 

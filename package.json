@@ -1,6 +1,6 @@
 {
   "name": "canvagif",
-  "version": "0.1.5",
+  "version": "0.1.7",
   "description": "Lib for making gif in canvas",
   "types": "./dist/types.d.ts",
   "main": "./dist/index.js",

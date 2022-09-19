@@ -56,9 +56,9 @@ export class Encoder {
 
   /**
    * Starts encode and makes gif
-   * @returns {this} Encoder
+   * @returns {Encoder} Encoder
   */
-  public start() {
+  public start(): this {
     this.out.writeUTFBytes("GIF89a");
     this.started = true;
     return this;
@@ -69,7 +69,7 @@ export class Encoder {
    * @param {CanvasRenderingContext2D} imageData rendering canvas context (2d)
    * @returns {void} void
   */
-  public updateFrame() {
+  public updateFrame(): void {
     if (!this.context) throw new CanvaGifError(`You didn't enter an image data. Function waiting for "CanvasRenderingContext2D"`, ErrorCode.ENCODER_ERROR);
     if (!this.started) throw new CanvaGifError("You cannot add frame before encoder starts.", ErrorCode.ENCODER_ERROR);
 
@@ -241,7 +241,7 @@ export class Encoder {
    * Ends encode and the final byte of the gif is being written
    * @returns {Buffer} a boolean value that indicates the success of the gif creation
   */
-  public finish() {
+  public finish(): Buffer {
     if (!this.started) throw new CanvaGifError(`You cannot finish encode before it starts.`, ErrorCode.ENCODER_ERROR);
     this.out.writeByte(0x3b);
     return this.out.getData();
@@ -249,22 +249,24 @@ export class Encoder {
 
   /**
    * Set milliseconds to wait between frames
-   * Default 0
+   * Default 100 / 30
    * @param {number} milliseconds number milliseconds of encoder's delay
-   * @returns {this} Encoder 
+   * @returns {Encoder} Encoder 
   */
-  public setDelay(milliseconds: number) {
-    // if (this.started) throw new CanvaGifError(`You cannot change encode options after it starts.`, ErrorCode.ENCODER_ERROR);
+  public setDelay(milliseconds: number): this {
+    if (this.started) throw new CanvaGifError(`You cannot change encode options after it starts.`, ErrorCode.ENCODER_ERROR);
     this.delay = Math.round(milliseconds / 10);
     return this;
   }
 
   /**
    * Set encoder fps
+   * 
+   * Default 30
    * @param {number} fps number frames of encoder per second
-   * @returns {this} Encoder 
+   * @returns {Encoder} Encoder 
   */
-  public setFrameRate(fps: number) {
+  public setFrameRate(fps: number): this {
     if (this.started) throw new CanvaGifError(`You cannot change encode options after it starts.`, ErrorCode.ENCODER_ERROR);
     this.delay = Math.round(100 / fps);
     return this;
@@ -273,7 +275,6 @@ export class Encoder {
   /**
    * Set the disposal code
    * @param {number} code alters behavior of how to render between frames. If no transparent color has been set, defaults to 0. Otherwise, defaults to 2.
-   *
    *  
    * Values :
    * 
@@ -285,9 +286,9 @@ export class Encoder {
    * 
    *    3 — Restore to previous. The decoder is required to restore the area overwritten by the graphic with what was there prior to rendering the graphic.
    * 
-   * @returns {this} Encoder 
+   * @returns {Encoder} Encoder 
   */
-  public setDispose(code: number) {
+  public setDispose(code: number): this {
     if (this.started) throw new CanvaGifError(`You cannot change encode options after it starts.`, ErrorCode.ENCODER_ERROR);
     if (code >= 0) this.dispose = code;
     return this;
@@ -306,9 +307,9 @@ export class Encoder {
    * 
    *    n — a positive number, loop n times, cannot be more than 20.
    * 
-   * @returns {this} Encoder
+   * @returns {Encoder} Encoder
   */
-  public setRepeat(value: number) {
+  public setRepeat(value: number): this {
     if (this.started) throw new CanvaGifError(`You cannot change encode options after it starts.`, ErrorCode.ENCODER_ERROR);
     let readableValue = 0;
 
@@ -333,9 +334,9 @@ export class Encoder {
    * 
    *    n — the higher the number, the worse the quality.
    * 
-   * @returns {this} Encoder 
+   * @returns {Encoder} Encoder 
   */
-  public setQuality(quality: number) {
+  public setQuality(quality: number): this {
     if (this.started) throw new CanvaGifError(`You cannot change encode options after it starts.`, ErrorCode.ENCODER_ERROR);
     if (quality < 1) quality = 1;
     this.sample = quality;
@@ -345,7 +346,7 @@ export class Encoder {
   /**
    * Get the canvas
    *
-   * @returns {this} Encoder
+   * @returns {Encoder} Encoder
   */
   public getContext(): CanvasRenderingContext2D {
     const canvas = createCanvas(this.width, this.height);
@@ -358,9 +359,9 @@ export class Encoder {
    * @param {number} color color to represent transparent background
    *
    * Example: 0x00FF00
-   * @returns {this} Encoder
+   * @returns {Encoder} Encoder
   */
-  public setTransparent(color: number) {
+  public setTransparent(color: number): this {
     if (this.started) throw new CanvaGifError(`You cannot change encode options after it starts.`, ErrorCode.ENCODER_ERROR);
     this.transparent = color;
     return this;

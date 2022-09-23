@@ -14,7 +14,7 @@
 This module is installed via npm:
 
 ``` bash
-$ npm install gifencoder
+$ npm install canvagif
 ```
 
 ## Dependencies (6)

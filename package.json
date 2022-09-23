@@ -1,6 +1,6 @@
 {
   "name": "canvagif",
-  "version": "0.1.10",
+  "version": "0.1.14",
   "description": "Lib for making gif in canvas",
   "types": "./dist/index.d.ts",
   "main": "./dist/index.js",
@@ -11,7 +11,6 @@
     "type": "git",
     "url": "git+https://github.com/PillowPowa/Canvagif.git"
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
@@ -44,5 +43,22 @@
   },
   "files": [
     "dist"
+  ],
+  "keywords": [
+    "encoder",
+    "decoder",
+    "gifencoder",
+    "gif-encoder",
+    "gifdecoder",
+    "gif-decoder",
+    "canvasgif",
+    "canvas-gif",
+    "gif",
+    "buffer",
+    "canvas",
+    "canvagif",
+    "gif-in-canvas",
+    "create-gif",
+    "gif-maker"
   ]
 }

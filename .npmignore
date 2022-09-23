@@ -1,7 +1,6 @@
 src
 examples
 
-README.md
 tsconfig.json
 .gitignore
 .prettierrc

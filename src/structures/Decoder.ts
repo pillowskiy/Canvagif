@@ -12,7 +12,7 @@ import { parseDataUri, isImage } from '../utils/Util';
 import { CanvaGifError, ErrorCode } from "./CanvaGifError";
 
 export class Decoder {
-  private url: string;
+  private url: string | Buffer;
   private frames: "all" | number = "all";
 
   private cumulative = true;
@@ -20,6 +20,9 @@ export class Decoder {
 
   private started = false;
 
+  constructor(url: string | Buffer) {
+    this.url = url;
+  }
 
   private async handleGIF(data: Buffer, cb: (err: CanvaGifError, array?: ndarray.NdArray<Uint8Array>, reader?: GifReader) => void) {
     let reader, ndata;
@@ -64,7 +67,7 @@ export class Decoder {
       cb(null, result.transpose(1, 0));
     }
   }
-  private getPixels(url: string, cb: (err: CanvaGifError, pixels?: ndarray.NdArray<Uint8Array>, reader?: GifReader) => void) {
+  private getPixels(url: string | Buffer, cb: (err: CanvaGifError, pixels?: ndarray.NdArray<Uint8Array>, reader?: GifReader) => void) {
     if (Buffer.isBuffer(url)) {
       this.handleGIF(url, cb);
     } else if (url.indexOf('data:') === 0) {
@@ -160,10 +163,11 @@ export class Decoder {
     return null;
   }
   private savePixels(array: ndarray.NdArray<Uint8Array>) {
-    const canvas = createCanvas(600, 338);
+    const canvas = createCanvas(array.shape[0], array.shape[1]);
     const context = canvas.getContext('2d');
-    canvas.width = array.shape[0];
-    canvas.height = array.shape[1];
+
+    context.fillStyle = "#000";
+    context.fillRect(0, 0, array.shape[0], array.shape[1]);
 
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
 
@@ -221,11 +225,6 @@ export class Decoder {
         resolve(frameData);
       });
     });
-  }
-  public setUrl(url: string) {
-    if (this.started) throw new CanvaGifError("You cannot change decode options after it starts.", ErrorCode.DECODER_ERROR);
-    this.url = url;
-    return this;
   }
   public setFramesCount(count: "all" | number) {
     if (this.started) throw new CanvaGifError("You cannot change decode options after it starts.", ErrorCode.DECODER_ERROR);

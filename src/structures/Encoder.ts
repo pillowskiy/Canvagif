@@ -1,29 +1,32 @@
 import ByteArray from "../Encoder/ByteArray";
 import ColorMap from "../Encoder/ColorMap";
 import PixelWriter from "../Encoder/PixelWriter";
+
 import { CanvaGifError, ErrorCode } from "./CanvaGifError";
+import { type CanvasRenderingContext2D } from "canvas";
+import { Decoder } from "./Decoder";
+import { FrameData } from "../types";
 
-import { createCanvas, type CanvasRenderingContext2D } from "canvas";
-
-export class Encoder {
+export class GIF {
   /**
     * Context width
     * @type {number}
-    * @readonly
+    * @public
   */
-  readonly width: number;
+  public width = 50;
 
   /**
     * Context height
     * @type {number}
-    * @readonly
+    * @public
   */
-  readonly height: number;
+  public height = 50;
 
   private started = false;
+
   private delay = 100 / 30;
   private repeat = 0;
-  private dispose = -1;
+  private dispose = 0;
   private transIndex = 0;
   private transparent: number;
   private sample = 100;
@@ -40,7 +43,8 @@ export class Encoder {
   private pixels: Uint8Array;
   private indexedPixels: Uint8Array;
 
-  private context: CanvasRenderingContext2D;
+  public frames: FrameData[] = [];
+
   private image: Uint8ClampedArray | CanvasRenderingContext2D;
   readonly out = new ByteArray();
 
@@ -49,7 +53,7 @@ export class Encoder {
      * @param {number} width Canvas Width
      * @param {number} height Canvas Height
   */
-  constructor(width: number, height: number) {
+  constructor(width?: number, height?: number) {
     this.width = width;
     this.height = height;
   }
@@ -63,19 +67,33 @@ export class Encoder {
     this.started = true;
     return this;
   }
-
+  /**
+     * Decode gif from url
+     * @param {string | Buffer} image Buffer or URL on gif
+     * @param {number | "all"} frames Number of frames to decode or "all"
+     * @returns {Promise<FrameData[]>} Frame array
+  */
+  public async decode(image: string | Buffer, frames: number | "all" = "all"): Promise<FrameData[]> {
+    const data = await new Decoder(image).setFramesCount(frames).start();
+    const { width, height, delay } = data[0].details;
+    this.width = width;
+    this.height = height;
+    this.delay = delay;
+    this.frames = data;
+    return this.frames;
+  }
   /**
    * Write out a new frame to the GIF.
    * @returns {void} void
   */
-  public updateFrame(): void {
-    if (!this.context) throw new CanvaGifError(`You didn't enter an image data. Function waiting for "CanvasRenderingContext2D"`, ErrorCode.ENCODER_ERROR);
+  public addFrame(context: CanvasRenderingContext2D): void {
+    if (!context) throw new CanvaGifError(`You didn't enter an image data. Function waiting for "CanvasRenderingContext2D"`, ErrorCode.ENCODER_ERROR);
     if (!this.started) throw new CanvaGifError("You cannot add frame before encoder starts.", ErrorCode.ENCODER_ERROR);
 
-    if (this.context && this.context.getImageData) {
-      this.image = this.context.getImageData(0, 0, this.width, this.height).data;
+    if (context && context.getImageData) {
+      this.image = context.getImageData(0, 0, this.width, this.height).data;
     } else {
-      this.image = this.context as CanvasRenderingContext2D;
+      this.image = context as CanvasRenderingContext2D;
     }
 
     this.getImagePixels();
@@ -176,8 +194,12 @@ export class Encoder {
   }
   private writePixels() {
     const encoder = new PixelWriter(
-      this.width, this.height,
-      { "pixels": this.indexedPixels, "colorDepth": this.colorDepth }
+      this.width,
+      this.height,
+      {
+        "pixels": this.indexedPixels,
+        "colorDepth": this.colorDepth
+      }
     );
 
     encoder.encode(this.out);
@@ -340,17 +362,6 @@ export class Encoder {
     if (quality < 1) quality = 1;
     this.sample = quality;
     return this;
-  }
-
-  /**
-   * Get the canvas context
-   *
-   * @returns {Encoder} Encoder
-  */
-  public getContext(): CanvasRenderingContext2D {
-    const canvas = createCanvas(this.width, this.height);
-    this.context = canvas.getContext("2d");
-    return this.context;
   }
 
   /**

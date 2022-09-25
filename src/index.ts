@@ -1,4 +1,3 @@
-export { Encoder } from "./structures/Encoder";
-export { Decoder } from "./structures/Decoder";
+export { GIF } from "./structures/Encoder";
 export { isImage, parseDataUri } from "./utils/Util";
 export * from './types';

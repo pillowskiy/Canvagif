@@ -7,7 +7,7 @@ export interface PixelWriterDetails {
 }
 
 export interface FrameData {
-  getImage: () => Canvas,
-  details: Frame | null,
-  frameIndex: number
+  "getImage": () => Canvas,
+  "details": Frame | null,
+  "frameIndex": number
 }

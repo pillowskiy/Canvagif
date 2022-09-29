@@ -13,16 +13,14 @@ export class GIF {
     * @type {number}
     * @public
   */
-  public width = 50;
+  public width: number;
 
   /**
     * Context height
     * @type {number}
     * @public
   */
-  public height = 50;
-
-  private started = false;
+  public height: number;
 
   private delay = 100 / 30;
   private repeat = 0;
@@ -43,7 +41,7 @@ export class GIF {
   private pixels: Uint8Array;
   private indexedPixels: Uint8Array;
 
-  public frames: FrameData[] = [];
+  // public frames: FrameData[] = [];
 
   private image: Uint8ClampedArray | CanvasRenderingContext2D;
   readonly out = new ByteArray();
@@ -54,18 +52,9 @@ export class GIF {
      * @param {number} height Canvas Height
   */
   constructor(width?: number, height?: number) {
-    this.width = width;
-    this.height = height;
-  }
-
-  /**
-   * Starts encode and makes gif
-   * @returns {Encoder} Encoder
-  */
-  public start(): this {
+    this.width = width || 16;
+    this.height = height || 16;
     this.out.writeUTFBytes("GIF89a");
-    this.started = true;
-    return this;
   }
   /**
      * Decode gif from url
@@ -76,11 +65,14 @@ export class GIF {
   public async decode(image: string | Buffer, frames: number | "all" = "all"): Promise<FrameData[]> {
     const data = await new Decoder(image).setFramesCount(frames).start();
     const { width, height, delay } = data[0].details;
-    this.width = width;
-    this.height = height;
+
+    if (this.width === 16 && this.height === 16) {
+      this.width = width;
+      this.height = height;
+    }
+
     this.delay = delay;
-    this.frames = data;
-    return this.frames;
+    return data;
   }
   /**
    * Write out a new frame to the GIF.
@@ -88,7 +80,6 @@ export class GIF {
   */
   public addFrame(context: CanvasRenderingContext2D): void {
     if (!context) throw new CanvaGifError(`You didn't enter an image data. Function waiting for "CanvasRenderingContext2D"`, ErrorCode.ENCODER_ERROR);
-    if (!this.started) throw new CanvaGifError("You cannot add frame before encoder starts.", ErrorCode.ENCODER_ERROR);
 
     if (context && context.getImageData) {
       this.image = context.getImageData(0, 0, this.width, this.height).data;
@@ -102,9 +93,7 @@ export class GIF {
     if (this.firstFrame) {
       this.writeLSD();
       this.writePalette();
-      if (this.repeat >= 0) {
-        this.writeNetscapeExt();
-      }
+      if (this.repeat >= 0) this.writeNetscapeExt();
     }
 
     this.writeGraphicCtrlExt();
@@ -262,8 +251,7 @@ export class GIF {
    * Ends encode and the final byte of the gif is being written
    * @returns {Buffer} a boolean value that indicates the success of the gif creation
   */
-  public finish(): Buffer {
-    if (!this.started) throw new CanvaGifError(`You cannot finish encode before it starts.`, ErrorCode.ENCODER_ERROR);
+  public buffer(): Buffer {
     this.out.writeByte(0x3b);
     return this.out.getData();
   }
@@ -275,7 +263,6 @@ export class GIF {
    * @returns {Encoder} Encoder 
   */
   public setDelay(milliseconds: number): this {
-    if (this.started) throw new CanvaGifError(`You cannot change encode options after it starts.`, ErrorCode.ENCODER_ERROR);
     this.delay = milliseconds;
     return this;
   }
@@ -288,7 +275,6 @@ export class GIF {
    * @returns {Encoder} Encoder 
   */
   public setFrameRate(fps: number): this {
-    if (this.started) throw new CanvaGifError(`You cannot change encode options after it starts.`, ErrorCode.ENCODER_ERROR);
     this.delay = 100 / fps;
     return this;
   }
@@ -310,7 +296,6 @@ export class GIF {
    * @returns {Encoder} Encoder 
   */
   public setDispose(code: number): this {
-    if (this.started) throw new CanvaGifError(`You cannot change encode options after it starts.`, ErrorCode.ENCODER_ERROR);
     if (code >= 0) this.dispose = code;
     return this;
   }
@@ -331,7 +316,6 @@ export class GIF {
    * @returns {Encoder} Encoder
   */
   public setRepeat(value: number): this {
-    if (this.started) throw new CanvaGifError(`You cannot change encode options after it starts.`, ErrorCode.ENCODER_ERROR);
     let readableValue = 0;
 
     if (value < 0) {
@@ -358,7 +342,6 @@ export class GIF {
    * @returns {Encoder} Encoder 
   */
   public setQuality(quality: number): this {
-    if (this.started) throw new CanvaGifError(`You cannot change encode options after it starts.`, ErrorCode.ENCODER_ERROR);
     if (quality < 1) quality = 1;
     this.sample = quality;
     return this;
@@ -372,7 +355,6 @@ export class GIF {
    * @returns {Encoder} Encoder
   */
   public setTransparent(color: number): this {
-    if (this.started) throw new CanvaGifError(`You cannot change encode options after it starts.`, ErrorCode.ENCODER_ERROR);
     this.transparent = color;
     return this;
   }

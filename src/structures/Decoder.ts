@@ -1,7 +1,6 @@
 import ndarray from "ndarray";
 import ops from 'ndarray-ops';
 
-import { MultiRange } from 'multi-integer-range';
 import { GifReader } from 'omggif';
 import { readFile } from "fs";
 import { createCanvas } from 'canvas';
@@ -13,10 +12,9 @@ import { CanvaGifError, ErrorCode } from "./CanvaGifError";
 
 export class Decoder {
   private url: string | Buffer;
-  private frames: "all" | number = "all";
 
   private cumulative = true;
-  private acceptedFrames: MultiRange | "all" = "all";
+  private frameCount: number | "all" = "all";
 
   private started = false;
 
@@ -107,56 +105,25 @@ export class Decoder {
       return this.handleData(array.pick(frame), data, 0);
     } else if (array.shape.length === 3) {
       if (array.shape[2] === 3) {
-        ops.assign(
-          ndarray(data,
-            [array.shape[0], array.shape[1], 3],
-            [4, 4 * array.shape[0], 1]),
-          array);
-        ops.assigns(
-          ndarray(data,
-            [array.shape[0] * array.shape[1]],
-            [4],
-            3),
-          255);
+        ops.assign(ndarray(data, [array.shape[0], array.shape[1], 3], [4, 4 * array.shape[0], 1]), array);
+        ops.assigns( ndarray(data, [array.shape[0] * array.shape[1]], [4], 3), 255);
       } else if (array.shape[2] === 4) {
-        ops.assign(
-          ndarray(data,
-            [array.shape[0], array.shape[1], 4],
-            [4, array.shape[0] * 4, 1]),
-          array);
+        ops.assign(ndarray(data,[array.shape[0], array.shape[1], 4],[4, array.shape[0] * 4, 1]), array);
       } else if (array.shape[2] === 1) {
         ops.assign(
-          ndarray(data,
-            [array.shape[0], array.shape[1], 3],
-            [4, 4 * array.shape[0], 1]),
-          ndarray(array.data,
-            [array.shape[0], array.shape[1], 3],
-            [array.stride[0], array.stride[1], 0],
-            array.offset));
-        ops.assigns(
-          ndarray(data,
-            [array.shape[0] * array.shape[1]],
-            [4],
-            3),
-          255);
+          ndarray(data, [array.shape[0], array.shape[1], 3], [4, 4 * array.shape[0], 1]),
+          ndarray(array.data, [array.shape[0], array.shape[1], 3], [array.stride[0], array.stride[1], 0], array.offset)
+        );
+        ops.assigns(ndarray(data, [array.shape[0] * array.shape[1]], [4], 3),255);
       } else {
         throw new CanvaGifError('Incompatible array shape', ErrorCode.DECODER_ERROR);
       }
     } else if (array.shape.length === 2) {
       ops.assign(
-        ndarray(data,
-          [array.shape[0], array.shape[1], 3],
-          [4, 4 * array.shape[0], 1]),
-        ndarray(array.data,
-          [array.shape[0], array.shape[1], 3],
-          [array.stride[0], array.stride[1], 0],
-          array.offset));
-      ops.assigns(
-        ndarray(data,
-          [array.shape[0] * array.shape[1]],
-          [4],
-          3),
-        255);
+        ndarray(data, [array.shape[0], array.shape[1], 3], [4, 4 * array.shape[0], 1]),
+        ndarray(array.data, [array.shape[0], array.shape[1], 3], [array.stride[0], array.stride[1], 0], array.offset)
+      );
+      ops.assigns(ndarray(data, [array.shape[0] * array.shape[1]], [4], 3), 255);
     } else {
       throw new CanvaGifError('Incompatible array shape', ErrorCode.DECODER_ERROR);
     }
@@ -165,9 +132,6 @@ export class Decoder {
   private savePixels(array: ndarray.NdArray<Uint8Array>) {
     const canvas = createCanvas(array.shape[0], array.shape[1]);
     const context = canvas.getContext('2d');
-
-    context.fillStyle = "#000";
-    context.fillRect(0, 0, array.shape[0], array.shape[1]);
 
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
 
@@ -190,7 +154,7 @@ export class Decoder {
         const frameData: FrameData[] = [];
         let maxAccumulatedFrame = 0;
         for (let i = 0; i < pixels.shape[0]; i++) {
-          if (this.acceptedFrames !== 'all' && !this.acceptedFrames.has(i)) {
+          if (this.frameCount !== 'all' && this.frameCount <= i) {
             continue;
           }
           ((frameIndex) => {
@@ -228,7 +192,7 @@ export class Decoder {
   }
   public setFramesCount(count: "all" | number) {
     if (this.started) throw new CanvaGifError("You cannot change decode options after it starts.", ErrorCode.DECODER_ERROR);
-    this.acceptedFrames = count === 'all' ? 'all' : new MultiRange(this.frames);
+    this.frameCount = count === "all" ? "all" : count;
     return this;
   }
   public setCollective(value: boolean) {

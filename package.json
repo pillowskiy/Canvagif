@@ -32,7 +32,6 @@
   },
   "dependencies": {
     "axios": "^0.27.2",
-    "multi-integer-range": "^5.0.0",
     "ndarray": "^1.0.19",
     "ndarray-ops": "^1.2.2",
     "omggif": "^1.0.10",

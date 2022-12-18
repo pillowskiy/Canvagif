@@ -26,8 +26,7 @@ function dataUriToBuffer(uri: string) {
   for (let i = 1; i < meta.length; i++) {
     if (meta[i] === 'base64') {
       base64 = true;
-    }
-    else {
+    } else {
       typeFull += `;${meta[i]}`;
       if (meta[i].indexOf('charset=') === 0) {
         charset = meta[i].substring(8);
